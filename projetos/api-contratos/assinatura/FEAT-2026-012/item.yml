@@ -1,0 +1,36 @@
+modelVersion: '3.0'
+schemaVersion: work-item/1.1
+kind: work-item
+id: FEAT-2026-012
+title: Assinatura digital de contratos
+context:
+  organization: aurora-credito
+  system: originacao
+  domain: assinatura
+  repositories:
+  - api-contratos
+nature: feature
+class: L
+workflow:
+  id: product-delivery
+  version: '1.0'
+state: draft
+ownership:
+  owner: ana
+  approvers:
+    design:
+    - security
+parent: null
+relations: []
+requirements:
+- id: RF-001
+  text: O cliente assina o contrato digitalmente na tela de emissão.
+- id: RF-002
+  text: O sistema registra o identificador da assinatura no contrato.
+- id: RNF-001
+  text: A assinatura não atrasa a emissão em mais de 3 segundos.
+evidence: []
+exceptions: []
+artifacts: []
+lifecycle:
+  createdAt: '2026-10-27'
