@@ -14,7 +14,7 @@ class: M
 workflow:
   id: product-delivery
   version: '1.0'
-state: draft
+state: specified
 ownership:
   owner: bruno
 parent: null
@@ -26,6 +26,15 @@ requirements:
   text: O cliente baixa o extrato em PDF depois da emissão do contrato.
 evidence: []
 exceptions: []
-artifacts: []
+artifacts:
+- path: artefatos/10-requisitos.md
+  kind: requirements
+  produced_by: agent
+  ai_use:
+  - schema: manuel-ai-use/1
+    tool: claude-code
+    model: nao-informado
+    session: demo-claude-code-requirements
+    role: drafted
 lifecycle:
   createdAt: '2026-10-29'
