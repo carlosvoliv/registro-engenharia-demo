@@ -21,7 +21,9 @@ ownership:
     design:
     - security
 parent: null
-relations: []
+relations:
+- type: blocks
+  target: FEAT-2026-014
 requirements:
 - id: RF-001
   text: O cliente assina o contrato digitalmente na tela de emissão.

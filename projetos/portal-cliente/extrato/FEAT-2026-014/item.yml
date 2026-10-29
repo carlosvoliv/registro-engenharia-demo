@@ -1,0 +1,31 @@
+modelVersion: '3.0'
+schemaVersion: work-item/1.1
+kind: work-item
+id: FEAT-2026-014
+title: Extrato em PDF
+context:
+  organization: aurora-credito
+  system: originacao
+  domain: extrato
+  repositories:
+  - portal-cliente
+nature: feature
+class: M
+workflow:
+  id: product-delivery
+  version: '1.0'
+state: draft
+ownership:
+  owner: bruno
+parent: null
+relations:
+- type: depends-on
+  target: FEAT-2026-012
+requirements:
+- id: RF-001
+  text: O cliente baixa o extrato em PDF depois da emissão do contrato.
+evidence: []
+exceptions: []
+artifacts: []
+lifecycle:
+  createdAt: '2026-10-29'
