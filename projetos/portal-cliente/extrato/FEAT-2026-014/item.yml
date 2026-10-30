@@ -14,7 +14,7 @@ class: M
 workflow:
   id: product-delivery
   version: '1.0'
-state: specified
+state: awaiting-approval
 ownership:
   owner: bruno
 parent: null
@@ -36,5 +36,8 @@ artifacts:
     model: nao-informado
     session: demo-claude-code-requirements
     role: drafted
+- path: artefatos/20-design.md
+  kind: design
+  produced_by: human
 lifecycle:
   createdAt: '2026-10-29'
