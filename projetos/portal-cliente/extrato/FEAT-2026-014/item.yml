@@ -14,7 +14,7 @@ class: M
 workflow:
   id: product-delivery
   version: '1.0'
-state: awaiting-approval
+state: planned
 ownership:
   owner: bruno
 parent: null
