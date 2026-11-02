@@ -1,0 +1,35 @@
+modelVersion: '3.0'
+schemaVersion: work-item/1.1
+kind: work-item
+id: DEF-2026-021
+title: Arredondamento de juros
+context:
+  organization: aurora-credito
+  system: originacao
+  domain: calculo
+  repositories:
+  - api-contratos
+nature: defect
+class: M
+workflow:
+  id: defect-correction
+  version: '1.0'
+state: draft
+ownership:
+  owner: ana
+parent: null
+relations: []
+requirements:
+- id: RF-001
+  text: O valor mensal usa arredondamento monetário de duas casas.
+- id: RF-002
+  text: O total apresentado coincide com a soma das parcelas.
+- id: RF-003
+  text: Uma regressão cobre valores próximos do limite de arredondamento.
+- id: RNF-001
+  text: O cálculo responde em até 200 ms em carga.
+evidence: []
+exceptions: []
+artifacts: []
+lifecycle:
+  createdAt: '2026-11-02'
