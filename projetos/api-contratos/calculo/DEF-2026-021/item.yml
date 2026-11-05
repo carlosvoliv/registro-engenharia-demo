@@ -14,7 +14,7 @@ class: M
 workflow:
   id: defect-correction
   version: '1.0'
-state: specified
+state: implementing
 ownership:
   owner: ana
 parent: null
