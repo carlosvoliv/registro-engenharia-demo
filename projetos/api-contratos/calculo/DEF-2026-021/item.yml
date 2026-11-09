@@ -14,7 +14,7 @@ class: M
 workflow:
   id: defect-correction
   version: '1.0'
-state: implementing
+state: reviewing
 ownership:
   owner: ana
 parent: null
@@ -40,5 +40,14 @@ artifacts:
     model: nao-informado
     session: demo-claude-code-requirements
     role: drafted
+- path: artefatos/30-execucao.md
+  kind: execution
+  produced_by: agent
+  ai_use:
+  - schema: manuel-ai-use/1
+    tool: codex
+    model: nao-informado
+    session: demo-codex-execution
+    role: implemented
 lifecycle:
   createdAt: '2026-11-02'
