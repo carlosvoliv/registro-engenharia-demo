@@ -1,0 +1,29 @@
+modelVersion: '3.0'
+schemaVersion: work-item/1.1
+kind: work-item
+id: TECH-2026-005
+title: Teste de carga do cálculo de juros
+context:
+  organization: aurora-credito
+  system: originacao
+  domain: calculo
+  repositories:
+  - api-contratos
+nature: technical-work
+class: S
+workflow:
+  id: technical-investigation
+  version: '1.0'
+state: draft
+ownership:
+  owner: ana
+parent: null
+relations:
+- type: regularizes
+  target: DEF-2026-021
+requirements: []
+evidence: []
+exceptions: []
+artifacts: []
+lifecycle:
+  createdAt: '2026-11-09'
