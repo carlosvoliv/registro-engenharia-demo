@@ -28,8 +28,20 @@ requirements:
   text: Uma regressão cobre valores próximos do limite de arredondamento.
 - id: RNF-001
   text: O cálculo responde em até 200 ms em carga.
-evidence: []
-exceptions: []
+evidence:
+- claim: O desempenho em carga ainda não foi medido.
+  status: unknown
+  requirement: RNF-001
+  owner: ana
+  due: '2026-11-30'
+exceptions:
+- id: EXC-2026-001
+  waives:
+  - RNF-001
+  reason: Ambiente de teste de carga indisponível até 25/11.
+  requested_by: ana
+  expires: '2026-11-30'
+  follow_up: TECH-2026-005
 artifacts:
 - path: artefatos/10-requisitos.md
   kind: requirements

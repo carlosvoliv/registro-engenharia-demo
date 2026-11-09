@@ -1,1 +1,2 @@
 {"item": "FEAT-2026-014", "gate": "design", "role": "security", "persona": "eva", "date": "2026-10-30", "source": "fictício"}
+{"item": "DEF-2026-021", "gate": "exception", "role": "tech-lead", "persona": "carla", "date": "2026-11-09", "source": "fictício", "exception": "EXC-2026-001"}
