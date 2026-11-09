@@ -14,7 +14,7 @@ class: L
 workflow:
   id: product-delivery
   version: '1.0'
-state: specified
+state: awaiting-approval
 ownership:
   owner: ana
   approvers:
@@ -31,7 +31,12 @@ requirements:
   text: O sistema registra o identificador da assinatura no contrato.
 - id: RNF-001
   text: A assinatura não atrasa a emissão em mais de 3 segundos.
-evidence: []
+evidence:
+- claim: O impacto da assinatura no tempo de emissão ainda não foi medido.
+  status: unknown
+  requirement: RNF-001
+  owner: ana
+  due: '2026-11-20'
 exceptions: []
 artifacts:
 - path: artefatos/10-requisitos.md
@@ -42,6 +47,15 @@ artifacts:
     tool: claude-code
     model: nao-informado
     session: demo-claude-code-requirements
+    role: drafted
+- path: artefatos/20-design.md
+  kind: design
+  produced_by: agent
+  ai_use:
+  - schema: manuel-ai-use/1
+    tool: claude-code
+    model: nao-informado
+    session: demo-claude-code-design
     role: drafted
 lifecycle:
   createdAt: '2026-10-27'
