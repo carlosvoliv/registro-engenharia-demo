@@ -14,7 +14,7 @@ class: M
 workflow:
   id: product-delivery
   version: '1.0'
-state: planned
+state: blocked
 ownership:
   owner: bruno
 parent: null
@@ -41,3 +41,6 @@ artifacts:
   produced_by: human
 lifecycle:
   createdAt: '2026-10-29'
+blocked_by:
+- FEAT-2026-012
+blocked_from: planned
