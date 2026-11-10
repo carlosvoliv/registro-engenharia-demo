@@ -14,7 +14,7 @@ class: M
 workflow:
   id: defect-correction
   version: '1.0'
-state: reviewing
+state: released
 ownership:
   owner: ana
 parent: null
@@ -29,6 +29,22 @@ requirements:
 - id: RNF-001
   text: O cálculo responde em até 200 ms em carga.
 evidence:
+- claim: Carla confirmou o arredondamento de duas casas.
+  status: confirmed
+  requirement: RF-001
+  source: artefatos/40-relatorio-de-teste.md
+  by: carla
+  date: '2026-11-10'
+- claim: Carla confirmou que o total confere com as parcelas.
+  status: confirmed
+  requirement: RF-002
+  source: artefatos/40-relatorio-de-teste.md
+  by: carla
+  date: '2026-11-10'
+- claim: A regressão de valores de limite foi executada.
+  status: observed
+  requirement: RF-003
+  source: artefatos/40-relatorio-de-teste.md
 - claim: O desempenho em carga ainda não foi medido.
   status: unknown
   requirement: RNF-001
@@ -61,5 +77,14 @@ artifacts:
     model: nao-informado
     session: demo-codex-execution
     role: implemented
+- path: artefatos/40-relatorio-de-teste.md
+  kind: test-report
+  produced_by: agent
+  ai_use:
+  - schema: manuel-ai-use/1
+    tool: claude-code
+    model: nao-informado
+    session: demo-claude-code-test-report
+    role: analyzed
 lifecycle:
   createdAt: '2026-11-02'
