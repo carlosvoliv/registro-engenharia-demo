@@ -309,6 +309,23 @@ class GateTests(unittest.TestCase):
         head = self.repo.head(item)
         self.assertIn("MG-051", self.validate(head, [review("carla-demo", head)]))
 
+    def test_MG051_requirement_covered_by_approved_exception_passes(self):
+        item = copy.deepcopy(self.repo.item)
+        item["state"] = "reviewing"
+        self.repo.base = self.repo.head(item)
+        item["state"] = "released"
+        item["artifacts"].append({"path": "artefatos/40-relatorio.md", "kind": "test-report", "produced_by": "human"})
+        write(self.repo.path, f"{PREFIX}/artefatos/40-relatorio.md", "# Relatório\n\nTeste adiado por exceção.\n")
+        without = self.repo.head(item)
+        self.assertIn("MG-051", self.validate(without, [review("carla-demo", without)]))
+        item["exceptions"] = self.waiver(item["id"])
+        covered = self.repo.head(item)
+        codes = self.validate(covered, [review("carla-demo", covered)])
+        self.assertNotIn("MG-051", codes)
+        self.assertNotIn("MG-061", codes)
+        # sem a aprovação da exceção, a cobertura não vale: o gate pede o review
+        self.assertIn("MG-020", self.validate(covered))
+
     def test_MG060_061_062_063_exceptions(self):
         item = copy.deepcopy(self.repo.item)
         item["exceptions"] = [{"id": "EXC-2026-001", "waives": ["RF-001"], "reason": "Teste adiado", "requested_by": "ana", "expires": "2026-11-30", "follow_up": item["id"]}]
