@@ -241,6 +241,38 @@ class GateTests(unittest.TestCase):
         self.assertIn("MG-032", self.validate(head))
         self.assertNotIn("MG-032", self.validate(head, [review("eva-demo", head)]))
 
+    def planned_base(self) -> dict:
+        item = copy.deepcopy(self.repo.item)
+        item["state"] = "planned"
+        self.repo.base = self.repo.head(item)
+        return item
+
+    def test_MG032_swapping_protected_artifact_path(self):
+        item = self.planned_base()
+        write(self.repo.path, f"{PREFIX}/artefatos/20-design-v2.md", "# Design\n\nOutra versão, sem revisão.\n")
+        item["artifacts"][1]["path"] = "artefatos/20-design-v2.md"
+        head = self.repo.head(item)
+        self.assertIn("MG-032", self.validate(head))
+        self.assertNotIn("MG-032", self.validate(head, [review("eva-demo", head)]))
+
+    def test_MG032_changing_the_protected_entries_of_the_artifacts_block(self):
+        item = self.planned_base()
+        control = copy.deepcopy(item)
+        control["evidence"] = [{"claim": "teste passou", "status": "observed", "source": "artefatos/20-design.md", "requirement": "RF-001"}]
+        self.assertNotIn("MG-032", self.validate(self.repo.head(control)), "mudança alheia ao bloco protegido não exige review")
+        removed = copy.deepcopy(item)
+        removed["artifacts"] = removed["artifacts"][:1]
+        self.assertIn("MG-032", self.validate(self.repo.head(removed)))
+        retyped = copy.deepcopy(item)
+        retyped["artifacts"][1]["kind"] = "other"
+        self.assertIn("MG-032", self.validate(self.repo.head(retyped)))
+        write(self.repo.path, f"{PREFIX}/artefatos/21-design-extra.md", "# Design extra\n\nConteúdo novo.\n")
+        added = copy.deepcopy(item)
+        added["artifacts"].append({"path": "artefatos/21-design-extra.md", "kind": "design", "produced_by": "human"})
+        head = self.repo.head(added)
+        self.assertIn("MG-032", self.validate(head))
+        self.assertNotIn("MG-032", self.validate(head, [review("eva-demo", head)]))
+
     def test_MG040_bad_ai_use_variants_and_human_allowed(self):
         for variant in (None, [], [{"schema": "manuel-ai-use/1", "tool": "x", "model": "m", "role": "drafted"}], [{"schema": "manuel-ai-use/1", "tool": "x", "model": "m", "session": "s", "role": "bad"}]):
             item = copy.deepcopy(self.repo.item)

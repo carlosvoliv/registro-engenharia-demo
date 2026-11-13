@@ -46,6 +46,18 @@ def date_value(value: object) -> dt.date:
     return value if isinstance(value, dt.date) else dt.date.fromisoformat(str(value))
 
 
+def protected_entries(item: dict, kinds: set[str]) -> set[tuple[str, str]]:
+    """Pares (kind, path) das entradas de `artifacts` cujo tipo está sob proteção de um gate."""
+    artifacts = item.get("artifacts")
+    if not isinstance(artifacts, list):
+        return set()
+    return {
+        (entry["kind"], entry["path"]) for entry in artifacts
+        if isinstance(entry, dict) and isinstance(entry.get("kind"), str) and entry["kind"] in kinds
+        and isinstance(entry.get("path"), str)
+    }
+
+
 def item_root(path: str) -> str | None:
     parts = path.split("/")
     if len(parts) >= 4 and parts[0] == "projetos":
@@ -337,13 +349,14 @@ class Validator:
             for gate, spec in wf.get("gates", {}).items():
                 if not self.at_or_after(old, wf, spec.get("after_state", "")):
                     continue
-                protected = set(spec.get("protects", []))
-                artifact_paths = {
-                    str(PurePosixPath(path).parent / a.get("path"))
-                    for a in old.get("artifacts", [])
-                    if isinstance(a, dict) and a.get("kind") in protected and isinstance(a.get("path"), str)
-                }
-                if artifact_paths.intersection(differences):
+                protected = {kind for kind in spec.get("protects", []) if isinstance(kind, str)}
+                before_entries = protected_entries(old, protected)
+                after_entries = protected_entries(new, protected)
+                folder = PurePosixPath(path).parent
+                artifact_paths = {str(folder / relative) for _, relative in before_entries | after_entries}
+                # Mudou o conteúdo de um artefato protegido OU o próprio bloco `artifacts` (caminho,
+                # tipo, entrada acrescentada ou removida): trocar o caminho não pode fugir do review.
+                if before_entries != after_entries or artifact_paths.intersection(differences):
                     if approval_issue(gate, self.policy, new, reviews, author, sha):
                         self.add("MG-032", identifier, f"artefato protegido por {gate} mudou sem novo review", path)
             self.check_exceptions(old, new, reviews, author, sha, identifier, path)
