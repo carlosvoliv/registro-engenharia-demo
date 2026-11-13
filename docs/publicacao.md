@@ -7,7 +7,11 @@ Este arquivo descreve trabalho futuro do mantenedor. A F01 permanece **local**. 
 - [ ] **Bypass:** revisar a lista de bypass em *Settings → Rules → Rulesets*; para a demo, ninguém deve poder ignorar a regra, inclusive o dono do repo.
 - [ ] **Teste da proteção:** abrir um PR que altere apenas `.github/workflows/manuel-gate.yml`. Confirmar que o merge fica bloqueado até o review do code owner. Se isso falhar, não apresentar a demo como gate obrigatório.
 - [ ] **Teste do check após review:** abrir um PR de transição, observar `gate` vermelho, enviar o review e confirmar que a execução de `pull_request_review` produz um check verde aceito como status obrigatório do mesmo PR.
-- [ ] **Versões:** conferir `actions/checkout@v4` e `actions/setup-python@v5` nas páginas oficiais das actions antes da publicação.
-- [ ] **Dados:** revisar todos os arquivos e commits; confirmar que tudo é fictício e que não há credenciais, e-mail, CPF nem conteúdo da empresa real.
+- [ ] **Versões das actions:** conferir `actions/checkout@v4` e `actions/setup-python@v5` nas páginas oficiais e **fixar cada uma pelo SHA do commit** da versão conferida (a tag pode ser movida). Isto depende do GitHub real; não copie SHAs de memória.
+- [ ] **PRs de fork:** não são suportados na demonstração; o gate falha fechado. Não habilite PRs de fork sem revisar o workflow.
+- [ ] **Dados:** revisar todos os arquivos **e os metadados dos commits**; confirmar que tudo é fictício e que não há credenciais, e-mail, CPF nem conteúdo da empresa real.
+  - Identidades: `git log --all --format='%an <%ae> | %cn <%ce>' | sort -u` deve listar **somente** a identidade pessoal pretendida para o repositório público, e nenhum endereço corporativo.
+  - Assinaturas: `git log --all --format=%B` não pode conter trailers de ferramentas (`Co-Authored-By`, `Generated with` e semelhantes).
+  - Arquivos: busque, em toda a árvore, pelo domínio do e-mail corporativo e por nomes de sistemas ou pessoas reais.
 
 O ledger pós-merge não tem escritor nesta fatia. A possibilidade de o bot escrever numa branch protegida permanece não verificada; as visões da demo deverão ler os reviews pela API até esse mecanismo ser definido.

@@ -12,4 +12,4 @@ A execução do GitHub Actions, o vínculo do check ao PR, as regras de proteç�
 
 ## Uso local
 
-O contrato está em `docs/schema.md`. O roteiro reproduzível do gate estará em `docs/demo-local.md`.
+O contrato dos dados está em `docs/schema.md`; as regras `MG-nnn` e a CLI, em `docs/regras.md`. O roteiro reproduzível do gate está em `docs/demo-local.md` (`bash docs/demo-local.sh` roda os três cenários).
