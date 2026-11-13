@@ -297,6 +297,7 @@ class Validator:
             if not old:
                 if new.get("state") != "draft":
                     self.add("MG-005", identifier, "item novo deve nascer em draft", path)
+                self.check_exceptions(None, new, reviews, author, sha, identifier, path)
                 continue
             for field in ("id", "nature"):
                 if old.get(field) != new.get(field):
@@ -342,15 +343,21 @@ class Validator:
                 if artifact_paths.intersection(differences):
                     if approval_issue(gate, self.policy, new, reviews, author, sha):
                         self.add("MG-032", identifier, f"artefato protegido por {gate} mudou sem novo review", path)
-            old_excs = {e.get("id"): e for e in old.get("exceptions", []) if isinstance(e, dict)}
-            for exc in new.get("exceptions", []) if isinstance(new.get("exceptions"), list) else []:
-                if isinstance(exc, dict) and old_excs.get(exc.get("id")) != exc:
-                    self.approval("exception", new, reviews, author, sha, identifier, path)
-                    if approval_issue("exception", self.policy, new, reviews, author, sha):
-                        self.add("MG-061", identifier, "exceção nova ou alterada sem aprovação", path)
+            self.check_exceptions(old, new, reviews, author, sha, identifier, path)
         if any(path.startswith(("scripts/", "config/", ".github/")) for path in differences):
             self.add_approval_platform(reviews, author, sha)
         return self.result()
+
+    def check_exceptions(self, old: dict | None, new: dict, reviews: list[dict], author: str, sha: str, identifier: str, path: str) -> None:
+        """Toda exceção nova ou alterada exige o gate `exception`; num item novo, todas são novas."""
+        previous = (old or {}).get("exceptions")
+        known = {e.get("id"): e for e in previous if isinstance(e, dict)} if isinstance(previous, list) else {}
+        current = new.get("exceptions")
+        for exc in current if isinstance(current, list) else []:
+            if isinstance(exc, dict) and known.get(exc.get("id")) != exc:
+                self.approval("exception", new, reviews, author, sha, identifier, path)
+                if approval_issue("exception", self.policy, new, reviews, author, sha):
+                    self.add("MG-061", identifier, "exceção nova ou alterada sem aprovação", path)
 
     def add_approval_platform(self, reviews: list[dict], author: str, sha: str) -> None:
         if approval_issue("platform", self.policy, None, reviews, author, sha):

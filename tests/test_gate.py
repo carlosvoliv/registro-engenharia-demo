@@ -262,6 +262,33 @@ class GateTests(unittest.TestCase):
         self.assertIn("MG-062", self.validate(self.repo.head(item)))
         self.assertNotIn("MG-062", self.validate(self.repo.base))
 
+    @staticmethod
+    def waiver(follow_up: str) -> list[dict]:
+        return [{"id": "EXC-2026-001", "waives": ["RF-001"], "reason": "Teste adiado", "requested_by": "ana", "expires": "2026-11-30", "follow_up": follow_up}]
+
+    def test_MG061_exception_on_new_item_needs_approval(self):
+        item = fixture("draft")
+        item["id"] = "FEAT-2026-099"
+        item["exceptions"] = self.waiver("FEAT-2026-012")
+        path = PATH.replace("FEAT-2026-012", "FEAT-2026-099")
+        write_item(self.repo.path, item, path)
+        for name in ("10-requisitos.md", "20-design.md"):
+            write(self.repo.path, path.replace("item.yml", f"artefatos/{name}"), "# Exemplo\n\nConteúdo válido.\n")
+        head = self.repo.head()
+        self.assertIn("MG-061", self.validate(head))
+        self.assertIn("MG-061", self.validate(head, [review("eva-demo", head)]))
+        self.assertEqual(self.validate(head, [review("carla-demo", head)]), set())
+
+    def test_MG061_exception_on_renamed_item_needs_approval(self):
+        item = copy.deepcopy(self.repo.item)
+        item["id"] = "FEAT-2026-013"
+        item["exceptions"] = self.waiver("FEAT-2026-013")
+        shutil.move(self.repo.path / PREFIX, self.repo.path / PREFIX.replace("FEAT-2026-012", "FEAT-2026-013"))
+        write_item(self.repo.path, item, PATH.replace("FEAT-2026-012", "FEAT-2026-013"))
+        head = self.repo.head()
+        self.assertIn("MG-061", self.validate(head))
+        self.assertNotIn("MG-061", self.validate(head, [review("carla-demo", head)]))
+
     def test_MG062_warning_in_check_all(self):
         item = copy.deepcopy(self.repo.item)
         item["exceptions"] = [{"id": "EXC-2026-001", "waives": ["RF-001"], "reason": "Teste adiado", "requested_by": "ana", "expires": "2026-11-01", "follow_up": item["id"]}]
