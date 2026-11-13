@@ -31,6 +31,8 @@ class Issue:
 
 
 def valid_date(value: object) -> bool:
+    if isinstance(value, dt.datetime):
+        return False  # `datetime` herda de `date`, mas o contrato é só YYYY-MM-DD
     if isinstance(value, dt.date):
         return True
     if not isinstance(value, str) or not DATE_RE.fullmatch(value):
@@ -40,6 +42,19 @@ def valid_date(value: object) -> bool:
         return True
     except ValueError:
         return False
+
+
+def one_of(value: object, options: object) -> bool:
+    """`value in options` sem TypeError quando `value` não é hashável (lista ou objeto no YAML)."""
+    try:
+        return value in options  # type: ignore[operator]
+    except TypeError:
+        return False
+
+
+def section(item: dict, name: str) -> dict:
+    value = item.get(name)
+    return value if isinstance(value, dict) else {}
 
 
 def date_value(value: object) -> dt.date:
@@ -65,16 +80,28 @@ def item_root(path: str) -> str | None:
     return None
 
 
+class ItemError(ValueError):
+    """item.yml que não pode ser lido com segurança; vira violação MG-002, não erro de uso."""
+
+
+MAX_ITEM_BYTES = 256 * 1024
+
+
 def load_item(repo: Path, rev: str, path: str) -> dict | None:
     raw = read(repo, rev, path)
     if raw is None:
         return None
+    if len(raw.encode("utf-8")) > MAX_ITEM_BYTES:
+        raise ItemError(f"item.yml acima de {MAX_ITEM_BYTES // 1024} KB: {path}")
     try:
+        # Alias YAML pode expandir o documento até estourar tempo e memória do CI.
+        if any(isinstance(event, yaml.AliasEvent) for event in yaml.parse(raw, Loader=yaml.SafeLoader)):
+            raise ItemError(f"aliases YAML não são permitidos: {path}")
         value = yaml.safe_load(raw)
     except yaml.YAMLError as exc:
-        raise ValueError(f"YAML ilegível: {path}: {exc}") from exc
+        raise ItemError(f"YAML ilegível: {path}: {exc}") from exc
     if not isinstance(value, dict):
-        raise ValueError(f"item deve ser objeto YAML: {path}")
+        raise ItemError(f"item deve ser objeto YAML: {path}")
     return value
 
 
@@ -85,6 +112,16 @@ class Validator:
         self.workflows = workflows
         self.today = today
         self.issues: list[Issue] = []
+        self.unreadable: set[tuple[str, str]] = set()
+
+    def load(self, rev: str, path: str) -> dict | None:
+        """Lê um item; se estiver ilegível, registra MG-002 e devolve None (já marcado em `unreadable`)."""
+        try:
+            return load_item(self.repo, rev, path)
+        except ItemError as exc:
+            self.unreadable.add((rev, path))
+            self.add("MG-002", path, str(exc), path)
+            return None
 
     def add(self, code: str, item: str, message: str, path: str = "", warning: bool = False) -> None:
         self.issues.append(Issue(code, item, message, path or item, warning))
@@ -103,7 +140,7 @@ class Validator:
         output: dict[str, tuple[str, dict]] = {}
         for path in sorted(files(self.repo, rev)):
             if path.endswith("/item.yml") or path == "item.yml":
-                item = load_item(self.repo, rev, path)
+                item = self.load(rev, path)
                 if item is not None:
                     output[str(item.get("id", path))] = (path, item)
         return output
@@ -127,19 +164,22 @@ class Validator:
                 self.add("MG-002", identifier, f"campo {name} ausente ou com tipo inválido", path)
         if item.get("modelVersion") != "3.0" or item.get("schemaVersion") != "work-item/1.1" or item.get("kind") != "work-item":
             self.add("MG-002", identifier, "modelVersion, schemaVersion ou kind inválido", path)
-        if item.get("nature") not in NATURES or item.get("class") not in {"S", "M", "L", "XL"}:
+        if not one_of(item.get("nature"), NATURES) or not one_of(item.get("class"), {"S", "M", "L", "XL"}):
             self.add("MG-002", identifier, "nature ou class fora do enum", path)
         context = item.get("context") or {}
         if not isinstance(context, dict) or context.get("organization") != self.policy.get("organization") or not isinstance(context.get("repositories"), list) or not context.get("system") or not context.get("domain"):
             self.add("MG-002", identifier, "context inválido", path)
         owner = (item.get("ownership") or {}).get("owner") if isinstance(item.get("ownership"), dict) else None
-        if owner not in self.policy.get("people", {}):
+        if not isinstance(owner, str) or owner not in self.policy.get("people", {}):
             self.add("MG-002", identifier, "ownership.owner ausente da policy.people", path)
+        approvers = item["ownership"].get("approvers", {}) if isinstance(item.get("ownership"), dict) else {}
+        if not isinstance(approvers, dict) or any(not isinstance(roles, list) or not all(isinstance(r, str) for r in roles) for roles in approvers.values()):
+            self.add("MG-002", identifier, "ownership.approvers deve mapear cada gate a uma lista de papéis", path)
         lifecycle = item.get("lifecycle") or {}
         if not isinstance(lifecycle, dict) or not valid_date(lifecycle.get("createdAt")):
             self.add("MG-002", identifier, "lifecycle.createdAt inválido", path)
         wf_ref = item.get("workflow") or {}
-        wf = self.workflows.get(wf_ref.get("id")) if isinstance(wf_ref, dict) else None
+        wf = self.workflows.get(wf_ref.get("id")) if isinstance(wf_ref, dict) and isinstance(wf_ref.get("id"), str) else None
         if not wf or wf_ref.get("version") != wf.get("version"):
             self.add("MG-002", identifier, "workflow.id ou version inválido", path)
             wf = None
@@ -163,9 +203,9 @@ class Validator:
             self.add("MG-011", identifier, "campos blocked_* fora de blocked", path)
         for field in ("blocked_by",):
             for target in item.get(field, []) if isinstance(item.get(field), list) else []:
-                if target not in all_items:
+                if not one_of(target, all_items):
                     self.add("MG-070", identifier, f"{field} aponta para item inexistente {target}", path)
-        if item.get("parent") and item["parent"] not in all_items:
+        if item.get("parent") and not one_of(item["parent"], all_items):
             self.add("MG-070", identifier, f"parent aponta para item inexistente {item['parent']}", path)
         for relation in item.get("relations", []) if isinstance(item.get("relations"), list) else []:
             if not isinstance(relation, dict) or relation.get("type") not in RELATIONS or not relation.get("target"):
@@ -182,35 +222,35 @@ class Validator:
             relative = artifact.get("path")
             if not isinstance(relative, str) or not relative.startswith("artefatos/") or PurePosixPath(relative).is_absolute() or ".." in PurePosixPath(relative).parts or read(self.repo, rev, str(PurePosixPath(path).parent / relative)) is None:
                 self.add("MG-031", identifier, f"artifacts[].path inválido ou inexistente: {relative}", path)
-            if artifact.get("kind") not in ARTIFACT_KINDS or artifact.get("produced_by") not in {"agent", "human"}:
+            if not one_of(artifact.get("kind"), ARTIFACT_KINDS) or not one_of(artifact.get("produced_by"), {"agent", "human"}):
                 self.add("MG-002", identifier, f"kind ou produced_by inválido em {relative}", path)
             if artifact.get("produced_by") == "agent":
                 use = artifact.get("ai_use")
                 if not isinstance(use, list) or not use or any(
                     not isinstance(event, dict) or event.get("schema") != "manuel-ai-use/1"
                     or not all(isinstance(event.get(field), str) and event[field].strip() for field in ("tool", "model", "session"))
-                    or event.get("role") not in ROLES for event in use
+                    or not one_of(event.get("role"), ROLES) for event in use
                 ):
                     self.add("MG-040", identifier, f"ai_use ausente ou inválido em {relative}", path)
         evidence = item.get("evidence") or []
         if not isinstance(evidence, list):
             evidence = []
         for entry in evidence:
-            if not isinstance(entry, dict) or not isinstance(entry.get("claim"), str) or not entry["claim"].strip() or entry.get("status") not in STATUSES or (entry.get("requirement") and entry["requirement"] not in req_ids):
+            if not isinstance(entry, dict) or not isinstance(entry.get("claim"), str) or not entry["claim"].strip() or not one_of(entry.get("status"), STATUSES) or (entry.get("requirement") and not one_of(entry["requirement"], req_ids)):
                 self.add("MG-050", identifier, "evidence malformada", path)
                 continue
             status = entry["status"]
             if status in {"observed", "confirmed"} and (not isinstance(entry.get("source"), str) or not entry["source"].strip()):
                 self.add("MG-050", identifier, "evidence observada/confirmada sem source", path)
-            if status == "confirmed" and (entry.get("by") not in self.policy.get("people", {}) or not valid_date(entry.get("date"))):
+            if status == "confirmed" and (not one_of(entry.get("by"), self.policy.get("people", {})) or not valid_date(entry.get("date"))):
                 self.add("MG-050", identifier, "evidence confirmada sem by/date", path)
-            if status == "unknown" and (entry.get("owner") not in self.policy.get("people", {}) or not valid_date(entry.get("due"))):
+            if status == "unknown" and (not one_of(entry.get("owner"), self.policy.get("people", {})) or not valid_date(entry.get("due"))):
                 self.add("MG-050", identifier, "evidence desconhecida sem owner/due", path)
         for exception in item.get("exceptions", []) if isinstance(item.get("exceptions"), list) else []:
-            if not isinstance(exception, dict) or not re.fullmatch(r"EXC-\d{4}-\d{3}", str(exception.get("id", ""))) or not isinstance(exception.get("waives"), list) or not exception["waives"] or any(req not in req_ids for req in exception["waives"]) or not isinstance(exception.get("reason"), str) or not exception["reason"].strip() or exception.get("requested_by") not in self.policy.get("people", {}) or not valid_date(exception.get("expires")) or not exception.get("follow_up"):
+            if not isinstance(exception, dict) or not re.fullmatch(r"EXC-\d{4}-\d{3}", str(exception.get("id", ""))) or not isinstance(exception.get("waives"), list) or not exception["waives"] or any(not one_of(req, req_ids) for req in exception["waives"]) or not isinstance(exception.get("reason"), str) or not exception["reason"].strip() or not one_of(exception.get("requested_by"), self.policy.get("people", {})) or not valid_date(exception.get("expires")) or not exception.get("follow_up"):
                 self.add("MG-060", identifier, "exceção malformada", path)
                 continue
-            if exception["follow_up"] not in all_items:
+            if not one_of(exception["follow_up"], all_items):
                 self.add("MG-063", identifier, f"follow_up inexistente: {exception['follow_up']}", path)
             if date_value(exception["expires"]) < self.today:
                 self.add("MG-062", identifier, f"exceção vencida: {exception['id']}", path, warning=full)
@@ -265,21 +305,21 @@ class Validator:
             requirements = []
         covered = {
             e.get("requirement") for e in entries
-            if isinstance(e, dict) and e.get("status") in {"observed", "confirmed"}
+            if isinstance(e, dict) and isinstance(e.get("requirement"), str) and one_of(e.get("status"), {"observed", "confirmed"})
             and isinstance(e.get("source"), str) and e["source"].strip()
-            and (e["status"] != "confirmed" or (e.get("by") in self.policy.get("people", {}) and valid_date(e.get("date"))))
+            and (e["status"] != "confirmed" or (one_of(e.get("by"), self.policy.get("people", {})) and valid_date(e.get("date"))))
         }
         covered.update(
             req for exc in exceptions if isinstance(exc, dict)
             and re.fullmatch(r"EXC-\d{4}-\d{3}", str(exc.get("id", "")))
             and isinstance(exc.get("waives"), list)
             and isinstance(exc.get("reason"), str) and exc["reason"].strip()
-            and exc.get("requested_by") in self.policy.get("people", {})
+            and one_of(exc.get("requested_by"), self.policy.get("people", {}))
             and valid_date(exc.get("expires")) and exc.get("follow_up")
-            for req in exc["waives"]
+            for req in exc["waives"] if isinstance(req, str)
         )
         for req in requirements:
-            if isinstance(req, dict) and req.get("id") not in covered:
+            if isinstance(req, dict) and isinstance(req.get("id"), str) and req.get("id") not in covered:
                 self.add("MG-051", identifier, f"requisito {req.get('id')} sem evidência válida ou exceção", path)
 
     def check_all(self) -> list[Issue]:
@@ -296,9 +336,11 @@ class Validator:
         touched_paths = {f"{root}/item.yml" for root in touched_roots}
         touched_paths.update(path for path in differences if path.endswith("/item.yml") or path == "item.yml")
         for path in sorted(touched_paths):
-            old = load_item(self.repo, base, path)
-            new = load_item(self.repo, head, path)
+            old = self.load(base, path)
+            new = self.load(head, path)
             identifier = str((new or old or {}).get("id") or path)
+            if (head, path) in self.unreadable:
+                continue  # o MG-002 já foi registrado; não é remoção
             if old and not new:
                 self.add("MG-003", identifier, "item removido; use cancelled", path)
                 continue
@@ -306,7 +348,7 @@ class Validator:
                 continue
             self.structural(path, new, head, current, full=False, deep=True)
             wf_ref = new.get("workflow") or {}
-            wf = self.workflows.get(wf_ref.get("id")) if isinstance(wf_ref, dict) else None
+            wf = self.workflows.get(wf_ref.get("id")) if isinstance(wf_ref, dict) and isinstance(wf_ref.get("id"), str) else None
             if not wf:
                 continue
             if not old:
@@ -318,9 +360,9 @@ class Validator:
                 if old.get(field) != new.get(field):
                     self.add("MG-004", identifier, f"campo imutável alterado: {field}", path)
             for field in ("createdAt",):
-                if (old.get("lifecycle") or {}).get(field) != (new.get("lifecycle") or {}).get(field):
+                if section(old, "lifecycle").get(field) != section(new, "lifecycle").get(field):
                     self.add("MG-004", identifier, f"campo imutável alterado: lifecycle.{field}", path)
-            if (old.get("context") or {}).get("organization") != (new.get("context") or {}).get("organization"):
+            if section(old, "context").get("organization") != section(new, "context").get("organization"):
                 self.add("MG-004", identifier, "campo imutável alterado: context.organization", path)
             before, after = old.get("state"), new.get("state")
             if before != after:
@@ -367,10 +409,10 @@ class Validator:
     def check_exceptions(self, old: dict | None, new: dict, reviews: list[dict], author: str, sha: str, identifier: str, path: str) -> None:
         """Toda exceção nova ou alterada exige o gate `exception`; num item novo, todas são novas."""
         previous = (old or {}).get("exceptions")
-        known = {e.get("id"): e for e in previous if isinstance(e, dict)} if isinstance(previous, list) else {}
+        known = {repr(e.get("id")): e for e in previous if isinstance(e, dict)} if isinstance(previous, list) else {}
         current = new.get("exceptions")
         for exc in current if isinstance(current, list) else []:
-            if isinstance(exc, dict) and known.get(exc.get("id")) != exc:
+            if isinstance(exc, dict) and known.get(repr(exc.get("id"))) != exc:
                 self.approval("exception", new, reviews, author, sha, identifier, path)
                 if approval_issue("exception", self.policy, new, reviews, author, sha):
                     self.add("MG-061", identifier, "exceção nova ou alterada sem aprovação", path)

@@ -67,6 +67,9 @@ def main(argv: list[str] | None = None) -> int:
     except (ValueError, OSError) as exc:
         print(f"Uso incorreto: {exc}", file=sys.stderr)
         return 2
+    except Exception as exc:  # noqa: BLE001 - exit 1 é «há violação»; erro interno sai com 2, sem traceback
+        print(f"erro interno do validador: {type(exc).__name__}: {exc}", file=sys.stderr)
+        return 2
 
 
 if __name__ == "__main__":

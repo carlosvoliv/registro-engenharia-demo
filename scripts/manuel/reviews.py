@@ -38,9 +38,13 @@ def approval_issue(
 ) -> tuple[str, str] | None:
     gate_policy = policy.get("gates", {}).get(gate, {})
     roles = set(gate_policy.get("approver_roles", []))
-    restrictions = (item or {}).get("ownership", {}).get("approvers", {})
-    if gate in restrictions:
-        roles &= set(restrictions[gate])
+    # Tipo errado em ownership/approvers não derruba o validador: a restrição inválida
+    # zera os papéis (falha fechada, MG-024) e o `structural` aponta o MG-002 no item.
+    ownership = (item or {}).get("ownership")
+    restrictions = ownership.get("approvers") if isinstance(ownership, dict) else None
+    if isinstance(restrictions, dict) and gate in restrictions:
+        allowed = restrictions[gate]
+        roles &= {role for role in allowed if isinstance(role, str)} if isinstance(allowed, list) else set()
     configured = {
         str(login).casefold()
         for role in roles
