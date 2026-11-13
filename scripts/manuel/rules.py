@@ -96,7 +96,10 @@ class Validator:
                     output[str(item.get("id", path))] = (path, item)
         return output
 
-    def structural(self, path: str, item: dict, rev: str, all_items: dict[str, tuple[str, dict]], full: bool) -> None:
+    def structural(self, path: str, item: dict, rev: str, all_items: dict[str, tuple[str, dict]], full: bool, deep: bool | None = None) -> None:
+        """`full` é o modo do `check-all` (exceção vencida vira aviso); `deep` revalida artefatos e
+        evidências exigidos pelo estado do item e, por padrão, acompanha `full`."""
+        deep = full if deep is None else deep
         identifier = str(item.get("id") or path)
         match = ITEM_RE.fullmatch(path)
         if not match or identifier != match.group(1):
@@ -199,7 +202,7 @@ class Validator:
                 self.add("MG-063", identifier, f"follow_up inexistente: {exception['follow_up']}", path)
             if date_value(exception["expires"]) < self.today:
                 self.add("MG-062", identifier, f"exceção vencida: {exception['id']}", path, warning=full)
-        if full and wf:
+        if deep and wf:
             self.required_artifacts(path, item, rev, wf, None, full=True)
             if self.at_or_after(item, wf, "released"):
                 self.required_evidence(path, item)
@@ -289,7 +292,7 @@ class Validator:
                 continue
             if not new:
                 continue
-            self.structural(path, new, head, current, full=False)
+            self.structural(path, new, head, current, full=False, deep=True)
             wf_ref = new.get("workflow") or {}
             wf = self.workflows.get(wf_ref.get("id")) if isinstance(wf_ref, dict) else None
             if not wf:

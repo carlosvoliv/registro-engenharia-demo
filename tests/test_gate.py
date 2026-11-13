@@ -195,6 +195,37 @@ class GateTests(unittest.TestCase):
         write(self.repo.path, f"{PREFIX}/artefatos/20-design.md", "# Design\n\n[TODO]\n")
         self.assertIn("MG-030", self.validate(self.repo.head(item)))
 
+    def test_MG030_check_revalidates_touched_item_without_transition(self):
+        write(self.repo.path, f"{PREFIX}/artefatos/10-requisitos.md", "# Requisitos\n\n[TODO]\n")
+        head = self.repo.head()
+        self.assertEqual(self.repo.item["state"], "awaiting-approval")
+        self.assertIn("MG-030", self.validate(head))
+        self.assertNotIn("MG-030", self.validate(self.repo.base))
+
+    def test_MG051_check_revalidates_evidence_of_released_item(self):
+        item = copy.deepcopy(self.repo.item)
+        item["state"] = "released"
+        item["artifacts"] += [
+            {"path": "artefatos/30-execucao.md", "kind": "execution", "produced_by": "human"},
+            {"path": "artefatos/40-relatorio.md", "kind": "test-report", "produced_by": "human"},
+        ]
+        item["evidence"] = [{"claim": "teste passou", "status": "observed", "source": "artefatos/40-relatorio.md", "requirement": "RF-001"}]
+        for name in ("30-execucao.md", "40-relatorio.md"):
+            write(self.repo.path, f"{PREFIX}/artefatos/{name}", "# Registro\n\nFeito e conferido.\n")
+        self.repo.base = self.repo.head(item)
+        self.assertEqual(self.validate(self.repo.base), set(), "estado de partida deve ser válido")
+        stripped = copy.deepcopy(item)
+        stripped["evidence"] = []
+        self.assertIn("MG-051", self.validate(self.repo.head(stripped)))
+
+    def test_legitimate_pr_adding_evidence_still_passes(self):
+        item = copy.deepcopy(self.repo.item)
+        item["state"] = "implementing"
+        self.repo.base = self.repo.head(item)
+        item = copy.deepcopy(item)
+        item["evidence"] = [{"claim": "teste passou", "status": "observed", "source": "artefatos/20-design.md", "requirement": "RF-001"}]
+        self.assertEqual(self.validate(self.repo.head(item)), set())
+
     def test_MG031_path_traversal_and_valid(self):
         item = copy.deepcopy(self.repo.item)
         item["artifacts"][0]["path"] = "artefatos/../secret.md"
