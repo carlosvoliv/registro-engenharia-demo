@@ -14,7 +14,7 @@ class: S
 workflow:
   id: technical-investigation
   version: '1.0'
-state: draft
+state: investigating
 ownership:
   owner: ana
 parent: null
@@ -24,6 +24,24 @@ relations:
 requirements: []
 evidence: []
 exceptions: []
-artifacts: []
+artifacts:
+- path: artefatos/10-plano-de-teste.md
+  kind: test-plan
+  produced_by: agent
+  ai_use:
+  - schema: manuel-ai-use/1
+    tool: claude-code
+    model: nao-informado
+    session: demo-claude-code-test-plan
+    role: drafted
+- path: artefatos/handoff.md
+  kind: handoff
+  produced_by: agent
+  ai_use:
+  - schema: manuel-ai-use/1
+    tool: claude-code
+    model: nao-informado
+    session: demo-claude-code-handoff
+    role: drafted
 lifecycle:
   createdAt: '2026-11-09'
