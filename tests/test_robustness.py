@@ -162,6 +162,14 @@ class CliExitCodeTests(unittest.TestCase):
         self.assertIn("erro interno do validador: RuntimeError: falha simulada", err.getvalue())
         self.assertNotIn("Traceback", err.getvalue())
 
+    def test_github_annotation_escapes_properties_and_message(self):
+        issue = manuel_gate.Issue("MG-030", "FEAT-1", "100% ruim\nlinha dois", "projetos/a,b:c/item.yml")
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            manuel_gate.report([issue], "github")
+        first = out.getvalue().splitlines()[0]
+        self.assertEqual(first, "::error file=projetos/a%2Cb%3Ac/item.yml,title=MG-030::100%25 ruim%0Alinha dois")
+
     def test_violation_exits_1_and_clean_exits_0(self):
         out = io.StringIO()
         with contextlib.redirect_stdout(out):

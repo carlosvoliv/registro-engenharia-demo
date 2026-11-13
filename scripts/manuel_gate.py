@@ -32,12 +32,17 @@ def parser() -> argparse.ArgumentParser:
     return result
 
 
+def escape(value: str, prop: bool = False) -> str:
+    """Escapa o valor de um workflow command do GitHub; nas propriedades (`file=`, `title=`) também `:` e `,`."""
+    value = value.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+    return value.replace(":", "%3A").replace(",", "%2C") if prop else value
+
+
 def report(issues: list[Issue], style: str) -> int:
     for issue in issues:
         if style == "github":
             level = "warning" if issue.warning else "error"
-            message = issue.message.replace("%", "%25").replace("\n", "%0A").replace("\r", "%0D")
-            print(f"::{level} file={issue.path},title={issue.code}::{message}")
+            print(f"::{level} file={escape(issue.path, True)},title={escape(issue.code, True)}::{escape(issue.message)}")
         else:
             label = " AVISO" if issue.warning else ""
             print(f"{issue.code}{label} [{issue.item}] {issue.message}")
