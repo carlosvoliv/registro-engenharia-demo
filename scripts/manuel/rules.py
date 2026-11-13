@@ -310,14 +310,14 @@ class Validator:
             if before != after:
                 if before in wf.get("terminal", []):
                     self.add("MG-012", identifier, "estado terminal não pode mudar", path)
+                elif after == "cancelled":
+                    pass
                 elif after == "blocked":
                     if before not in wf.get("blockable_from", []) or new.get("blocked_from") != before or not new.get("blocked_by"):
                         self.add("MG-011", identifier, "entrada em blocked inválida", path)
                 elif before == "blocked":
                     if after != old.get("blocked_from"):
                         self.add("MG-011", identifier, "saída de blocked deve voltar a blocked_from", path)
-                elif after == "cancelled" and before not in wf.get("terminal", []):
-                    pass
                 else:
                     edge = next((e for e in wf.get("transitions", []) if e.get("from") == before and e.get("to") == after), None)
                     if edge is None:
@@ -328,6 +328,8 @@ class Validator:
                             self.required_evidence(path, new)
                         if gate := edge.get("requires_approval"):
                             self.approval(gate, new, reviews, author, sha, identifier, path)
+            elif before == "blocked" and old.get("blocked_from") != new.get("blocked_from"):
+                self.add("MG-011", identifier, "blocked_from é imutável enquanto o item está bloqueado", path)
             for gate, spec in wf.get("gates", {}).items():
                 if not self.at_or_after(old, wf, spec.get("after_state", "")):
                     continue

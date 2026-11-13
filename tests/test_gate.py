@@ -138,6 +138,40 @@ class GateTests(unittest.TestCase):
         item["blocked_by"] = []
         self.assertIn("MG-011", self.validate(self.repo.head(item)))
 
+    @staticmethod
+    def blocked(item: dict, previous: str = "awaiting-approval") -> dict:
+        value = copy.deepcopy(item)
+        value["state"] = "blocked"
+        value["blocked_from"] = previous
+        value["blocked_by"] = [value["id"]]
+        return value
+
+    def test_MG011_blocked_from_is_immutable_while_blocked(self):
+        # PR1: awaiting-approval → blocked, como deve ser.
+        blocked = self.blocked(self.repo.item)
+        head1 = self.repo.head(blocked)
+        self.assertEqual(self.validate(head1), set())
+        # PR2: o item continua blocked, mas blocked_from vira implementing.
+        self.repo.base = head1
+        laundered = copy.deepcopy(blocked)
+        laundered["blocked_from"] = "implementing"
+        self.assertIn("MG-011", self.validate(self.repo.head(laundered)))
+        # A saída legítima, de volta ao estado de origem, continua livre.
+        self.assertEqual(self.validate(self.repo.head(fixture("awaiting-approval"))), set())
+
+    def test_MG011_blocked_exit_must_return_to_blocked_from(self):
+        self.repo.base = self.repo.head(self.blocked(self.repo.item))
+        self.assertIn("MG-011", self.validate(self.repo.head(fixture("implementing"))))
+        self.assertEqual(self.validate(self.repo.head(fixture("awaiting-approval"))), set())
+
+    def test_blocked_to_cancelled_is_allowed(self):
+        self.repo.base = self.repo.head(self.blocked(self.repo.item))
+        head = self.repo.head(fixture("cancelled"))
+        self.assertEqual(self.validate(head), set())
+        stale = fixture("cancelled")
+        stale["blocked_from"] = "awaiting-approval"
+        self.assertIn("MG-011", self.validate(self.repo.head(stale)))
+
     def test_MG012_terminal_change_and_rework_allowed(self):
         item = copy.deepcopy(self.repo.item)
         item["state"] = "closed"

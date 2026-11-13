@@ -9,3 +9,5 @@ O item declara `context`, `nature`, `class`, `state`, `ownership`, `requirements
 `evidence[]` declara `claim` e estado `observed`, `confirmed`, `inferred` ou `unknown`. Observação e confirmação têm fonte; confirmação também tem pessoa e data; desconhecimento tem dono e prazo. Só observação e confirmação cobrem requisitos. Uma exceção pode cobrir temporariamente um requisito, com motivo, solicitante, expiração e item de acompanhamento.
 
 A aprovação é derivada do review no SHA exato do PR. Nenhum resultado é gravado no PR. O ledger histórico é um dado separado; seu escritor pós-merge fica fora desta fatia.
+
+Um item `blocked` guarda `blocked_from` (o estado de onde saiu) e `blocked_by`. Enquanto o item continua `blocked`, `blocked_from` é **imutável** (MG-011): a saída só volta a esse estado, então trocá-lo contornaria a aprovação que o estado de origem exigiu. Um item `blocked` pode ser cancelado diretamente (`blocked → cancelled`), com os campos `blocked_*` removidos.
