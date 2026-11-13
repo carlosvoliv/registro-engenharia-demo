@@ -1,0 +1,21 @@
+schema: manuel-policy/1
+organization: aurora-credito
+people:
+  ana: {role: dev}
+  bruno: {role: dev}
+  carla: {role: tech-lead}
+  diego: {role: product}
+  eva: {role: security}
+approvers:
+  security: ["<GITHUB_DO_COLEGA>"]
+  tech-lead: ["<GITHUB_DA_SEGUNDA_CONTA>"]
+  platform: ["<GITHUB_DO_MANTENEDOR>"]
+  product: []
+gates:
+  design: {approver_roles: [security]}
+  release: {approver_roles: [tech-lead]}
+  exception: {approver_roles: [tech-lead]}
+  platform: {approver_roles: [platform]}
+metrics:
+  allowed: [andamento-por-item, responsavel-por-item, idade-por-etapa, bloqueios, lead-time-por-time, retrabalho-por-time, passagem-de-gates, custo-de-ia-agregado]
+  forbidden: [ranking-de-pessoas, commits-por-dev, linhas-por-dev, produtividade-individual]

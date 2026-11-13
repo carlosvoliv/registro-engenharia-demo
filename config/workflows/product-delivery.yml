@@ -1,0 +1,22 @@
+schema: manuel-workflow/1
+id: product-delivery
+version: "1.0"
+states: [draft, investigating, specified, awaiting-approval, planned, implementing, reviewing, released, closed, blocked, cancelled, superseded]
+state_order: [draft, investigating, specified, awaiting-approval, planned, implementing, reviewing, released, closed]
+terminal: [closed, cancelled, superseded]
+blockable_from: [investigating, specified, awaiting-approval, planned, implementing, reviewing]
+transitions:
+  - {from: draft, to: investigating}
+  - {from: draft, to: specified}
+  - {from: investigating, to: specified}
+  - {from: specified, to: awaiting-approval, requires_artifacts: [requirements]}
+  - {from: awaiting-approval, to: specified}
+  - {from: awaiting-approval, to: planned, requires_approval: design, requires_artifacts: [design]}
+  - {from: planned, to: implementing}
+  - {from: implementing, to: reviewing, requires_artifacts: [execution]}
+  - {from: reviewing, to: implementing}
+  - {from: reviewing, to: released, requires_approval: release, requires_artifacts: [test-report], requires_evidence: true}
+  - {from: released, to: closed}
+gates:
+  design: {protects: [design], after_state: planned}
+  release: {protects: [test-report], after_state: released}

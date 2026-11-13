@@ -1,0 +1,17 @@
+schema: manuel-workflow/1
+id: defect-correction
+version: "1.0"
+states: [draft, investigating, specified, implementing, reviewing, released, closed, blocked, cancelled]
+state_order: [draft, investigating, specified, implementing, reviewing, released, closed]
+terminal: [closed, cancelled]
+blockable_from: [investigating, specified, implementing, reviewing]
+transitions:
+  - {from: draft, to: investigating}
+  - {from: investigating, to: specified, requires_artifacts: [requirements]}
+  - {from: specified, to: implementing}
+  - {from: implementing, to: reviewing, requires_artifacts: [execution]}
+  - {from: reviewing, to: implementing}
+  - {from: reviewing, to: released, requires_approval: release, requires_artifacts: [test-report], requires_evidence: true}
+  - {from: released, to: closed}
+gates:
+  release: {protects: [test-report], after_state: released}

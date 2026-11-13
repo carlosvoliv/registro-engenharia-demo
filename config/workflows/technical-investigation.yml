@@ -1,0 +1,12 @@
+schema: manuel-workflow/1
+id: technical-investigation
+version: "1.0"
+states: [draft, investigating, concluded, closed, blocked, cancelled]
+state_order: [draft, investigating, concluded, closed]
+terminal: [closed, cancelled]
+blockable_from: [investigating, concluded]
+transitions:
+  - {from: draft, to: investigating}
+  - {from: investigating, to: concluded, requires_artifacts: [findings]}
+  - {from: concluded, to: closed}
+gates: {}
