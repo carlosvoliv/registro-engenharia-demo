@@ -208,7 +208,7 @@ class Validator:
         if item.get("parent") and not one_of(item["parent"], all_items):
             self.add("MG-070", identifier, f"parent aponta para item inexistente {item['parent']}", path)
         for relation in item.get("relations", []) if isinstance(item.get("relations"), list) else []:
-            if not isinstance(relation, dict) or relation.get("type") not in RELATIONS or not relation.get("target"):
+            if not isinstance(relation, dict) or not one_of(relation.get("type"), RELATIONS) or not isinstance(relation.get("target"), str) or not relation["target"].strip():
                 self.add("MG-002", identifier, "relation inválida", path)
             elif relation["target"] not in all_items:
                 self.add("MG-070", identifier, f"relation aponta para item inexistente {relation['target']}", path, True)

@@ -29,6 +29,7 @@ def rich_item(state: str) -> dict:
         {"claim": "ignorado", "status": "unknown", "owner": "ana", "due": "2026-12-01"},
     ]
     item["exceptions"] = [{"id": "EXC-2026-001", "waives": ["RF-001"], "reason": "adiado", "requested_by": "ana", "expires": "2026-11-30", "follow_up": item["id"]}]
+    item["relations"] = [{"type": "relates-to", "target": item["id"]}]
     if state == "blocked":
         item["blocked_from"] = "awaiting-approval"
         item["blocked_by"] = [item["id"]]
@@ -54,6 +55,13 @@ def replace(item: dict, location: tuple, value: object) -> dict:
         holder = holder[step]
     holder[location[-1]] = value
     return result
+
+
+def empty_containers(node: object, prefix: tuple = ()):
+    if isinstance(node, (dict, list)) and not node:
+        yield prefix
+    for key, value in (node.items() if isinstance(node, dict) else enumerate(node) if isinstance(node, list) else ()):
+        yield from empty_containers(value, prefix + (key,))
 
 
 class DataErrorTests(unittest.TestCase):
@@ -121,6 +129,29 @@ class DataErrorTests(unittest.TestCase):
         self.assertTrue(any(i.code == "MG-002" and "ilegível" in i.message for i in self.check(self.repo.commit("quebrado"))))
         (self.repo.path / PATH).write_text("- só\n- lista\n")
         self.assertTrue(any(i.code == "MG-002" for i in self.check(self.repo.commit("lista"))))
+
+    def test_fuzz_item_has_no_empty_container(self):
+        # Lista ou objeto vazio não tem nó para mutar: o fuzz passaria sem tocar nele (foi o caso de `relations`).
+        for state in ("planned", "blocked"):
+            with self.subTest(state=state):
+                self.assertEqual(list(empty_containers(rich_item(state))), [])
+
+    def test_MG002_relation_with_unhashable_or_non_text_fields_is_a_violation(self):
+        bad_relations = (
+            {"type": ["relates-to"], "target": "FEAT-2026-012"},
+            {"type": {"a": 1}, "target": "FEAT-2026-012"},
+            {"type": "relates-to", "target": ["FEAT-2026-012"]},
+            {"type": "relates-to", "target": {"a": 1}},
+            {"type": "relates-to", "target": 7},
+            {"type": "relates-to", "target": "  "},
+            {"type": ["x"], "target": {"b": 2}},
+        )
+        for bad in bad_relations:
+            item = fixture("planned")
+            item["relations"] = [bad]
+            with self.subTest(relation=bad):
+                head = self.repo.head(item)
+                self.assertIn("MG-002", self.codes(head, [review("eva-demo", head)]))
 
     def test_no_wrong_type_anywhere_in_the_item_crashes_the_validator(self):
         # Cada nó do item (planned) recebe cada valor de tipo errado; o `blocked_*` só vale no estado blocked.
