@@ -3,3 +3,4 @@ __pycache__/
 .pytest_cache/
 # visões geradas (descartáveis; regenere com scripts/manuel_view.py)
 views/
+ensaios/
