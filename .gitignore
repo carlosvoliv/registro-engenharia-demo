@@ -1,3 +1,5 @@
 __pycache__/
 *.pyc
 .pytest_cache/
+# visões geradas (descartáveis; regenere com scripts/manuel_view.py)
+views/
