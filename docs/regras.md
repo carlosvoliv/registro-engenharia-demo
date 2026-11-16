@@ -36,7 +36,7 @@ A aprovação **nunca é gravada no PR**: ela é derivada, a cada execução, da
 | MG-063 | `follow_up` de exceção aponta para item inexistente | ◆ |
 | MG-070 | `blocked_by` ou `parent` inexistente (**erro**); `relations[].target` inexistente (**aviso**) | ◆ |
 | MG-080 | workflow ou policy inválidos | ◆ |
-| MG-090 | o PR altera `scripts/`, `config/` ou `.github/` sem review do gate `platform`. É defesa em profundidade: **não protege o arquivo do workflow** (ver [publicacao.md](publicacao.md)) | |
+| MG-090 | o PR altera `scripts/`, `config/`, `.github/` ou `agentes/` (os papéis e as permissões dos agentes) sem review do gate `platform`. É defesa em profundidade: **não protege o arquivo do workflow** (ver [publicacao.md](publicacao.md)) | |
 
 Quando há mais de um motivo, o validador reporta **todos**; para o review, prevalece o mais específico (um `APPROVED` do autor é MG-022, e não MG-020; um `APPROVED` em commit antigo é MG-021).
 
