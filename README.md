@@ -13,5 +13,6 @@ A execução do GitHub Actions, o vínculo do check ao PR, as regras de proteç�
 ## Uso local
 
 A visão executiva e o agente de pergunta estão em `docs/visoes-e-pergunta.md` (`scripts/manuel_view.py` e `scripts/manuel_ask.py`).
+A retomada de um item por um segundo agente está em `docs/retomada.md` (`scripts/manuel_resume.py`).
 
 O contrato dos dados está em `docs/schema.md`; as regras `MG-nnn` e a CLI, em `docs/regras.md`. O roteiro reproduzível do gate está em `docs/demo-local.md` (`bash docs/demo-local.sh` roda os três cenários).
