@@ -34,3 +34,5 @@ jobs:
           gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/reviews" --paginate --slurp > reviews.json
           python3 trusted/scripts/manuel_gate.py check --repo . --config-dir trusted/config \
             --base "$BASE_SHA" --head "$HEAD_SHA" --reviews reviews.json --pr-author "$PR_AUTHOR" --format github
+
+# comentário de teste da proteção do workflow
