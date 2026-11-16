@@ -9,7 +9,7 @@ people:
 approvers:
   security: ["<GITHUB_DO_COLEGA>"]
   tech-lead: ["<GITHUB_DA_SEGUNDA_CONTA>"]
-  platform: ["<GITHUB_DO_MANTENEDOR>"]
+  platform: ["carlosvoliv"]
   product: []
 gates:
   design: {approver_roles: [security]}

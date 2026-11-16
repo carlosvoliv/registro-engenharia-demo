@@ -1,5 +1,6 @@
-# Os handles reais serão definidos antes da publicação.
-# /.github/ @<MANTENEDOR>
-# /scripts/ @<MANTENEDOR>
-# /config/ @<MANTENEDOR>
-# /.github/CODEOWNERS @<MANTENEDOR>
+# Dono único da demonstração. Mudança em workflow, scripts, configuração e papéis dos agentes exige o review dele.
+/.github/ @carlosvoliv
+/.github/CODEOWNERS @carlosvoliv
+/scripts/ @carlosvoliv
+/config/ @carlosvoliv
+/agentes/ @carlosvoliv
