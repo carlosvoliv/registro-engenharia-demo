@@ -17,6 +17,8 @@ DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 NATURES = {"feature", "defect", "incident", "investigation", "technical-work"}
 ARTIFACT_KINDS = {"requirements", "design", "execution", "test-plan", "test-report", "findings", "handoff", "other"}
 ROLES = {"drafted", "implemented", "reviewed", "analyzed"}
+# o que o PR não pode mudar sem review do gate `platform`; agentes/ define as permissões dos agentes
+PLATFORM_PATHS = ("scripts/", "config/", ".github/", "agentes/")
 STATUSES = {"observed", "confirmed", "inferred", "unknown"}
 RELATIONS = {"blocks", "depends-on", "regularizes", "relates-to"}
 
@@ -402,7 +404,7 @@ class Validator:
                     if approval_issue(gate, self.policy, new, reviews, author, sha):
                         self.add("MG-032", identifier, f"artefato protegido por {gate} mudou sem novo review", path)
             self.check_exceptions(old, new, reviews, author, sha, identifier, path)
-        if any(path.startswith(("scripts/", "config/", ".github/")) for path in differences):
+        if any(path.startswith(PLATFORM_PATHS) for path in differences):
             self.add_approval_platform(reviews, author, sha)
         return self.result()
 
@@ -419,4 +421,4 @@ class Validator:
 
     def add_approval_platform(self, reviews: list[dict], author: str, sha: str) -> None:
         if approval_issue("platform", self.policy, None, reviews, author, sha):
-            self.add("MG-090", "PLATFORM", "mudança em scripts/, config/ ou .github/ sem aprovação platform", "config/policy.yml")
+            self.add("MG-090", "PLATFORM", "mudança em scripts/, config/, .github/ ou agentes/ sem aprovação platform", "config/policy.yml")

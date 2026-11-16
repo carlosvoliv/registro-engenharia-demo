@@ -407,6 +407,12 @@ class GateTests(unittest.TestCase):
         self.assertNotIn("MG-090", self.validate(head, [review("kadu-demo", head)], config_dir=trusted))
         self.assertIn("MG-090", self.validate(head, [review("malicious-demo", head)], config_dir=trusted))
 
+    def test_MG090_covers_the_agent_roles(self):
+        write(self.repo.path, "agentes/pergunta.md", "---\npapel: pergunta\npermissoes: [ler]\n---\ncorpo\n")
+        head = self.repo.commit("agentes")
+        self.assertIn("MG-090", self.validate(head))
+        self.assertNotIn("MG-090", self.validate(head, [review("kadu-demo", head)]))
+
     def test_check_all_and_github_output_and_exit_codes(self):
         cli = ROOT / "scripts/manuel_gate.py"
         args = [sys.executable, str(cli), "check-all", "--repo", str(self.repo.path)]
