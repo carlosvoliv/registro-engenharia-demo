@@ -1,6 +1,6 @@
 # Registro de demonstração do Manuel
 
-Este repositório contém **somente dados fictícios** da organização inventada Aurora Crédito. Pessoas, sistemas, demandas, datas e aprovações são simulados para uma demonstração. Nenhum conteúdo representa a empresa do autor.
+Este repositório contém **somente dados fictícios** da organização inventada Aurora Crédito. Pessoas, sistemas, demandas, datas e aprovações são simulados para uma demonstração; o histórico dos itens (datas e sequência de estados) também é simulado: os commits `chore(dados-simulados)` têm datas fictícias. Nenhum conteúdo representa a empresa do autor.
 
 ## O que foi verificado
 

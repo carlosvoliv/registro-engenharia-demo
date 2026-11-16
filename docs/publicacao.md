@@ -12,6 +12,7 @@ Este arquivo descreve trabalho futuro do mantenedor. A F01 permanece **local**. 
 - [ ] **Dados:** revisar todos os arquivos **e os metadados dos commits**; confirmar que tudo é fictício e que não há credenciais, e-mail, CPF nem conteúdo da empresa real.
   - Identidades: `git log --all --format='%an <%ae> | %cn <%ce>' | sort -u` deve listar **somente** a identidade pessoal pretendida para o repositório público, e nenhum endereço corporativo.
   - Assinaturas: `git log --all --format=%B` não pode conter trailers de ferramentas (`Co-Authored-By`, `Generated with` e semelhantes).
+  - Histórico simulado: os commits `chore(dados-simulados)` têm datas fictícias (27/10 a 13/11) e dizem isso na mensagem; ao publicar, confirme que a descrição do repositório também diz que o histórico dos itens é simulado.
   - Arquivos: busque, em toda a árvore, pelo domínio do e-mail corporativo e por nomes de sistemas ou pessoas reais.
 
 O ledger pós-merge não tem escritor nesta fatia. A possibilidade de o bot escrever numa branch protegida permanece não verificada; as visões da demo deverão ler os reviews pela API até esse mecanismo ser definido.

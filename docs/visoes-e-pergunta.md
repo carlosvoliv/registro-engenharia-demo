@@ -16,7 +16,7 @@ python3 scripts/manuel_view.py --today 2026-11-18
 - **Segurança:** todo texto vindo do registro é escapado no HTML. Um item ilegível entra em «Problemas» e não derruba a visão.
 - `views/` é descartável e **fica fora do git**; regenere quando quiser. A mesma entrada gera a mesma saída (a data de referência é argumento, não relógio).
 
-**Limite dos dados atuais:** as datas vêm dos commits do próprio dataset, então todos os itens entraram no estado atual no mesmo dia. Idades diferentes entre itens exigem um histórico com datas simuladas, que **não foi feito**.
+**O histórico dos itens é simulado.** Os commits `chore(dados-simulados)` têm datas de autor e de committer fictícias (27/10 a 13/11), escritas para a demonstração: cada item percorre, em ordem, transições válidas do seu workflow, e `check-all` passa em cada ponto. Por isso, em 18/11, a assinatura digital aparece aguardando aprovação há 9 dias (desde 09/11), o extrato bloqueado e a correção liberada há 8, e a investigação de carga há 5. Em outro dia, as idades mudam junto. Não apresente essas datas como histórico real. `tests/test_dataset.py` mantém a coerência (só transições válidas, idades em 18/11, commits marcados como simulados).
 
 ## Agente de pergunta
 
