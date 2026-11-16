@@ -39,4 +39,4 @@ O papel do agente está em `agentes/pergunta.md` (permissões, regras e as três
 - Que nada da conta de quem roda chegue ao modelo: o Claude Code injeta o contexto da conta mesmo em `--safe-mode`. O papel manda não revelar, mas isso é instrução, não bloqueio.
 - Funcionamento em outra versão do Claude Code (testado com a 2.1.325) ou com outro fornecedor.
 
-Cada pergunta leva cerca de 20 s e custa centavos de dólar. Para a demonstração, guarde as respostas ensaiadas como reserva.
+**Tempo e custo (medidos só em parte):** a primeira pergunta ensaiada levou 19 s; uma chamada trivial custou US$ 0,007. O tempo e o custo das demais não foram medidos. Como a resposta é de modelo e varia, para a demonstração guarde as respostas ensaiadas como reserva (`--salvar`).
